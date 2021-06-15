@@ -13,8 +13,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#define MAXLINE 1024
-
+#define WAIT_FOR_MORESPACE 1
+#define MESSAGE_RECEIVED 0
 
 int open_listenfd(char *port);
 
