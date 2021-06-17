@@ -80,8 +80,6 @@ int main(int argc, char const **argv)
             printf("Error");//cambiar cuando ya esté en producción
             break;
         }
-        
-
-
+    
             return 0;
         }
