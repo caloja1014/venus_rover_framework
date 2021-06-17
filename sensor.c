@@ -1,5 +1,5 @@
 #include <getopt.h>
-#include <commond.h>
+#include <common.h>
 #include <limits.h>
 #include <time.h>
 void print_help(char *command)
