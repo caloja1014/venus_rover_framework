@@ -20,7 +20,7 @@ void print_help(char *command)
     printf(" -d\t\t\tRun in modo-debug in other case it will run in modo-realtime");
 }
 int dflag;
-int main(int argc, char const **argv)
+int main(int argc, char  **argv)
 {
     int opt, index;
 
@@ -60,28 +60,26 @@ int main(int argc, char const **argv)
     }
 
     int port_n = atoi(port);
-	if(port_n <= 0 || port_n > USHRT_MAX){
-		fprintf(stderr, "Puerto: %s invalido. Ingrese un número entre 1 y %d.\n", port, USHRT_MAX);
-		return 1;
-	}
+    if (port_n <= 0 || port_n > USHRT_MAX)
+    {
+        fprintf(stderr, "Puerto: %s invalido. Ingrese un número entre 1 y %d.\n", port, USHRT_MAX);
+        return 1;
+    }
     listenfd = open_listenfd(port);
-    if(listenfd < 0)
-		connection_error(listenfd);
+    if (listenfd < 0)
+        connection_error(listenfd);
 
-    
     tpool_t *tm;
-    size_t num_threads=pcthread_get_num_procs();
-    tm=tpool_create(num_threads);
+    size_t num_threads = pcthread_get_num_procs();
+    tm = tpool_create(3);
 
     while (1)
     {
         clientlen = sizeof(clientaddr);
-		connfd = malloc(sizeof(int));
+        connfd = malloc(sizeof(int));
         *connfd = accept(listenfd, (struct sockaddr *)&clientaddr, &clientlen);
-        tpool_add_work(tm,atender_cliente,connfd);
-
+        tpool_add_work(tm, atender_cliente, connfd);
     }
-    
 
     tpool_wait(tm);
 
@@ -90,19 +88,21 @@ int main(int argc, char const **argv)
     return 0;
 }
 
-void *atender_cliente(void *connfd){
-    int fd_conn = *((int*)connfd);
-    int n, status;
-	char buf[MAXLINE] = {0};
+void *atender_cliente(void *connfd)
+{
 
+    int fd_conn = *((int *)connfd);
+    int n, status;
+    char buf[MAXLINE] = {0};
+    
     while (1)
     {
-        n = read(connfd, buf, MAXLINE);
-		if(n <= 0)
-			return;
+        
+        n = read(fd_conn, buf, MAXLINE);
+        if (n <= 0)
+            return;
 
-		printf("Recibido: %s", buf);
-        memset(buf, 0, MAXLINE); 
+        printf("tid=%d\n",pthread_self());
+        memset(buf, 0, MAXLINE);
     }
-    
 }

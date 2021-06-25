@@ -1,5 +1,5 @@
 #include <getopt.h>
-#include <common.h>
+#include "common.h"
 #include <limits.h>
 #include <time.h>
 void print_help(char *command)
@@ -13,7 +13,7 @@ void print_help(char *command)
     printf(" -t\t\t\tSet the time to send information");
 }
 
-int main(int argc, char const **argv)
+int main(int argc, char **argv)
 {
 
     int opt, time;
@@ -21,7 +21,7 @@ int main(int argc, char const **argv)
     char *hostname, *port;
 
     int signal_recv;
-    while ((opt = getopt(argc, argv, "th:")) != -1)
+    while ((opt = getopt(argc, argv, "ht:")) != -1)
     {
         switch (opt)
         {
@@ -39,16 +39,21 @@ int main(int argc, char const **argv)
         }
     }
 
-    if (argc != 3)
+    int contador = 0;
+    int index = 0;
+    for (index = optind; index < argc; index++)
+        contador++;
+
+    if (contador != 2)
     {
         fprintf(stderr, "uso: %s <hostname> <puerto>\n", argv[0]);
-        fprintf(stderr, " \t\t\t\t%s -h\n", argv[0]);
-        return -1;
+        fprintf(stderr, "     %s -h\n", argv[0]);
+        return 1;
     }
     else
     {
-        hostname = argv[1];
-        port = argv[2];
+        hostname = argv[optind];
+        port = argv[optind + 1];
     }
 
     int port_n = atoi(port);
@@ -71,15 +76,18 @@ int main(int argc, char const **argv)
 
     char dato_prueba[] = "[2,4,9],99,1095379198.75";
     size_t n, l = sizeof(dato_prueba);
-
-    while ((time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC) < time)
+    time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+    //printf("%d\n",time_spend);
+    while (time_spend < time)
     {
         n = write(clientfd, dato_prueba, l);
-        if (n <= 0)
+        printf("%d\n", n);
+        sleep(5);
+            if (n <= 0)
         {
-            printf("Error");//cambiar cuando ya esté en producción
+            printf("Error"); //cambiar cuando ya esté en producción
             break;
         }
-    
-            return 0;
-        }
+        time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+    }
+}
