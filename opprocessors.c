@@ -109,7 +109,7 @@ void *atender_cliente(void *connfd)
         n = read(fd_conn, buf, MAXLINE);
         if (n <= 0)
             return;
-        write(fd_conn,ATTENDING,sizeof(int));
+        write(fd_conn,"1",2);
         printf("tid=%d\n", pthread_self());
         memset(buf, 0, MAXLINE);
     }

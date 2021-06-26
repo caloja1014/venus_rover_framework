@@ -2,6 +2,7 @@
 #include "common.h"
 #include <limits.h>
 #include <time.h>
+#define MAXLINE 1024
 void print_help(char *command)
 {
 
@@ -78,14 +79,14 @@ int main(int argc, char **argv)
     size_t n, n2, l = sizeof(dato_prueba);
     time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
 
-    int read_buffer;
+    char read_buffer[MAXLINE+1]={0};
     //printf("%d\n",time_spend);
     while (time_spend < time)
     {
         n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
         n = write(clientfd, dato_prueba, l);
 
-        printf("%d    %d\n", n, read_buffer);
+        printf("%d    %s\n", n, read_buffer);
         sleep(5);
         if (n <= 0)
         {
