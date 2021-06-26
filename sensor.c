@@ -75,15 +75,19 @@ int main(int argc, char **argv)
     double time_spend;
 
     char dato_prueba[] = "[2,4,9],99,1095379198.75";
-    size_t n, l = sizeof(dato_prueba);
+    size_t n, n2, l = sizeof(dato_prueba);
     time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+
+    int read_buffer;
     //printf("%d\n",time_spend);
     while (time_spend < time)
     {
+        n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
         n = write(clientfd, dato_prueba, l);
-        printf("%d\n", n);
+
+        printf("%d    %d\n", n, read_buffer);
         sleep(5);
-            if (n <= 0)
+        if (n <= 0)
         {
             printf("Error"); //cambiar cuando ya esté en producción
             break;

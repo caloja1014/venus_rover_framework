@@ -5,14 +5,14 @@ CFLAGS= -Wall -c
 
 all: framework sensor
 
-framework: opprocessors.o common.o threadpool.o $(DEPS) threadpool.h
-	gcc -o $@ opprocessors.o common.o threadpool.o -L. -lpthread $(DFLAGS) threadpool.h
+framework: opprocessors.o common.o  $(DEPS)
+	gcc -o $@ opprocessors.o common.o -L. -lpthread $(DFLAGS)
 
 sensor: sensor.o common.o $(DEPS)
 	gcc -o $@ sensor.o common.o $(DFLAGS)
 
 
-%.o: %.c $(DEPS) threadpool.h
+%.o: %.c $(DEPS)
 	gcc $(CFLAGS) $< $(DFLAGS)
 
 # Compila usando la opción -g para facilitar la depuración con gdb.

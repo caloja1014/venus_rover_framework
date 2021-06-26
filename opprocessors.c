@@ -1,12 +1,14 @@
 #include <getopt.h>
 #include <limits.h>
 #include <sys/wait.h>
-
+#include <pthread.h>
 #include <syslog.h>
 #include <fcntl.h>
-#include "threadpool.h"
+//#include "threadpool.h"
 #include "common.h"
 #define MAXLINE 1024
+#define ATTENDING 1
+#define WAITING 0
 void *atender_cliente(void *connfd);
 
 void print_help(char *command)
@@ -19,15 +21,22 @@ void print_help(char *command)
     printf(" -h\t\t\tHelp, show this message\n");
     printf(" -d\t\t\tRun in modo-debug in other case it will run in modo-realtime");
 }
+void recoger_hijos(int signal)
+{
+    while (waitpid(-1, 0, WNOHANG) > 0)
+        ;
+
+    return;
+}
+
 int dflag;
-int main(int argc, char  **argv)
+int main(int argc, char **argv)
 {
     int opt, index;
 
-    //Sockets
     int listenfd, *connfd;
     unsigned int clientlen;
-    //Direcciones y puertos
+
     struct sockaddr_in clientaddr;
     struct hostent *hp;
     char *haddrp, *port;
@@ -65,44 +74,45 @@ int main(int argc, char  **argv)
         fprintf(stderr, "Puerto: %s invalido. Ingrese un número entre 1 y %d.\n", port, USHRT_MAX);
         return 1;
     }
+
+    signal(SIGCHLD, recoger_hijos);
+
     listenfd = open_listenfd(port);
+
     if (listenfd < 0)
         connection_error(listenfd);
 
-    tpool_t *tm;
-    size_t num_threads = pcthread_get_num_procs();
-    tm = tpool_create(3);
 
+    pthread_t t_id;
     while (1)
     {
         clientlen = sizeof(clientaddr);
         connfd = malloc(sizeof(int));
         *connfd = accept(listenfd, (struct sockaddr *)&clientaddr, &clientlen);
-        tpool_add_work(tm, atender_cliente, connfd);
+        pthread_create(&t_id, NULL, atender_cliente, connfd);
     }
 
-    tpool_wait(tm);
-
-    tpool_destroy(tm);
-    //printf("%d\n",pcthread_get_num_procs());
     return 0;
 }
 
 void *atender_cliente(void *connfd)
 {
-
+    pthread_detach(pthread_self());
     int fd_conn = *((int *)connfd);
+
     int n, status;
     char buf[MAXLINE] = {0};
-    
+
     while (1)
     {
-        
+
         n = read(fd_conn, buf, MAXLINE);
         if (n <= 0)
             return;
-
-        printf("tid=%d\n",pthread_self());
+        write(fd_conn,ATTENDING,sizeof(int));
+        printf("tid=%d\n", pthread_self());
         memset(buf, 0, MAXLINE);
     }
+    close(fd_conn);
+    return NULL;
 }
