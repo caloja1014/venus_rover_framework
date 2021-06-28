@@ -1,5 +1,21 @@
 {
     "files.associations": {
-        "threadpool.h": "c"
+        "threadpool.h": "c",
+        "op_code_buffer.h": "c",
+        "vector": "c",
+        "optional": "c",
+        "ostream": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "*.tcc": "c",
+        "memory_resource": "c",
+        "memory": "c",
+        "streambuf": "c",
+        "queue.h": "c",
+        "semaphore.h": "c"
     }
 }
