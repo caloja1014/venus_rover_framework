@@ -1,12 +1,4 @@
-#include <queue.c>
-
-#define MAX_SIZE_BUFFER 20
-struct OpCodeBuffer
-{
-    struct Queue *data;
-    struct Queue *times;
-    int id_op;
-};
+#include "op_code_buffer.h"
 
 struct OpCodeBuffer *op_code_buffer_create(int id_op)
 {
@@ -18,11 +10,19 @@ struct OpCodeBuffer *op_code_buffer_create(int id_op)
 }
 void pop_information(struct OpCodeBuffer *op_cb)
 {
-    popQ(op_cb->data);
+
     popQ(op_cb->times);
+    popQ(op_cb->data);
 }
+void pop_and_set(struct OpCodeBuffer *op_cb, double *data, double *time_s)
+{
+    *data = popQ(op_cb->data);
+    *time_s = popQ(op_cb->times);
+}
+
 void push_information(struct OpCodeBuffer *op_cb, double data, double time)
 {
+
     if (isFullQ(op_cb->times))
     {
         pop_information(op_cb);
@@ -31,7 +31,15 @@ void push_information(struct OpCodeBuffer *op_cb, double data, double time)
     pushQ(op_cb->times, time);
 }
 
-void isEmpty(struct OpCodeBuffer *op_cb)
+int isEmpty(struct OpCodeBuffer *op_cb)
 {
     return isEmptyQ(op_cb->data);
+}
+
+void clean_queue(struct OpCodeBuffer *op_cb)
+{
+    while (!isEmpty)
+    {
+        popQ((op_cb->data));
+    }
 }
