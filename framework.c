@@ -74,6 +74,7 @@ void print_help(char *command)
     printf(" -h\t\t\tHelp, show this message\n");
     printf(" -d\t\t\tRun in modo-debug in other case it will run in modo-realtime");
     printf(" -f\t\t\tSet the frecuency of the opprocesors");
+    printf(" -x\t\t\tSet the maximun (in minutes)tim to wait");
 }
 void recoger_hijos(int signal)
 {
@@ -84,6 +85,8 @@ void recoger_hijos(int signal)
 }
 
 int dflag = 0;
+double freq;
+double x_minutes;
 sem_t mutex;
 int main(int argc, const char **argv)
 {
@@ -91,15 +94,15 @@ int main(int argc, const char **argv)
     atexit(closelog);
     sem_init(&mutex, 0, 1);
     int opt, index;
-
+    char *eptr;
     int listenfd, *connfd;
     unsigned int clientlen;
 
     struct sockaddr_in clientaddr;
     struct hostent *hp;
     char *haddrp, *port;
-    int freq;
-    while ((opt = getopt(argc, argv, "hdf")) != -1)
+
+    while ((opt = getopt(argc, argv, "hdf:x:")) != -1)
     {
         switch (opt)
         {
@@ -111,11 +114,15 @@ int main(int argc, const char **argv)
             dflag = 1;
             break;
         case 'f':
-            freq = atoi(optarg);
+            freq = strtod(optarg, &eptr);
+            break;
+        case 'x':
+            x_minutes = strtod(optarg, &eptr);
             break;
         default:
             fprintf(stderr, "uso: %s <puerto>\n", argv[0]);
             fprintf(stderr, "     %s -h\n", argv[0]);
+            fprintf(stderr, "     %s -f\n", argv[0]);
             fprintf(stderr, "     %s -d\n", argv[0]);
             return -1;
         }
@@ -127,9 +134,11 @@ int main(int argc, const char **argv)
     {
         fprintf(stderr, "uso: %s <puerto>\n", argv[0]);
         fprintf(stderr, "     %s -h\n", argv[0]);
+        fprintf(stderr, "     %s -f\n", argv[0]);
         fprintf(stderr, "     %s -d\n", argv[0]);
         return 1;
     }
+    printf("%d  %d\n", freq, x_minutes);
 
     int port_n = atoi(port);
     if (port_n <= 0 || port_n > USHRT_MAX)
@@ -186,7 +195,7 @@ void *atender_cliente(void *connfd)
             pthread_t sub_t_id, sub_t_id2;
 
             sem_wait(&mutex);
-            opprocesor = op_procesor_create(1, 0.1, 1, dflag);
+            opprocesor = op_procesor_create(1, freq, x_minutes, dflag);
             sem_post(&mutex);
 
             add_information(opprocesor, data_sensor, time_sensor);
