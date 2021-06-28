@@ -1,16 +1,8 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <limits.h>
+
+#include "queue.h"
 
 
 
-struct Queue
-{
-    int front, rear, size;
-    unsigned capacity;
-    double *array;
-};
 struct Queue *createQueue(unsigned capacity)
 {
     struct Queue *queue = (struct Queue *)malloc(sizeof(struct Queue));
@@ -39,11 +31,11 @@ void pushQ(struct Queue *queue, double item)
     queue->array[queue->rear] = item;
     queue->size = queue->size + 1;
 }
-int popQ(struct Queue *queue)
+double popQ(struct Queue *queue)
 {
     if (isEmptyQ(queue))
         return INT_MIN;
-    int item = queue->array[queue->front];
+    double item = queue->array[queue->front];
     queue->front = (queue->front + 1) % queue->capacity;
     queue->size = queue->size - 1;
     return item;
