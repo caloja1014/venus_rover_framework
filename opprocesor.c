@@ -1,6 +1,6 @@
 #include "opprocesor.h"
 
-struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes)
+struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes,bool is_debug)
 {
     struct OpProcesor *opprocesor = malloc(sizeof(struct OpProcesor));
     opprocesor->id_op = id_op;
@@ -8,6 +8,7 @@ struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes)
     opprocesor->x_minutes = x_minutes;
     opprocesor->buffer = op_code_buffer_create(1);
     opprocesor->init_time = (double)time(NULL);
+    opprocesor->is_debug=is_debug;
 
     return opprocesor;
 }
@@ -36,7 +37,7 @@ double process_information(struct OpProcesor *opprocesor)
     clean_queue(opprocesor->buffer);
     flag = true;
     
-    return total / capacity;
+    return capacity!=0? total / capacity:-1;
 }
 
 void add_information(struct OpProcesor *opprocesor, double data, double timestamp)

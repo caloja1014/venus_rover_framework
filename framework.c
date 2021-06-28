@@ -8,6 +8,7 @@
 #include "common.h"
 #include "opprocesor.h"
 #include <semaphore.h>
+#include <syslog.h>
 #define MAXLINE 1024
 #define ATTENDING 1
 #define WAITING 0
@@ -82,10 +83,12 @@ void recoger_hijos(int signal)
     return;
 }
 
-int dflag;
+int dflag = 0;
 sem_t mutex;
 int main(int argc, const char **argv)
 {
+    openlog("Framework Rover", LOG_PID, LOG_USER);
+    atexit(closelog);
     sem_init(&mutex, 0, 1);
     int opt, index;
 
@@ -183,7 +186,7 @@ void *atender_cliente(void *connfd)
             pthread_t sub_t_id, sub_t_id2;
 
             sem_wait(&mutex);
-            opprocesor = op_procesor_create(1, 0.1, 1);
+            opprocesor = op_procesor_create(1, 0.1, 1, dflag);
             sem_post(&mutex);
 
             add_information(opprocesor, data_sensor, time_sensor);
@@ -229,12 +232,38 @@ void *verify_frequency(void *args)
         }
 
         sem_wait(&mutex);
+
         double val = process_information(op);
-        printf("valor es: %f de la thread %d\n", val,pthread_self());
-        sleep(5);
+        if (dflag)
+        {
+            //syslogs
+            if (val == -1)
+            {
+                syslog(LOG_INFO, "No existen datos para realizar el cálculo\n");
+            }
+            else
+            {
+                char log_message[MAXLINE];
+                sprintf(log_message, "El promedio de los datos de la operación %d es: %f\n", op->id_op, val);
+                syslog(LOG_INFO, log_message);
+            }
+        }
+        else
+        {
+            if (val == -1)
+            {
+                printf("No existen datos para realizar el cálculo\n");
+            }
+            else
+            {
+                printf("El promedio de los datos de la operación %d es: %f\n", op->id_op, val);
+            }
+        }
+
+        // printf("valor es: %f de la thread %d\n", val, pthread_self());
         op->init_time = (double)time(NULL);
+
         sem_post(&mutex);
-        
     }
 }
 
@@ -252,7 +281,18 @@ void *verify_waiting_time(void *args)
         now_time = (double)time(NULL);
         result = (now_time - (op->last_time_pushed)) / 60;
     }
+    if (dflag)
+    {
+        //syslog
+        char log_message[MAXLINE];
+        sprintf(log_message, "La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
+        syslog(LOG_INFO, log_message);
+    }
+    else
+    {
+        printf("La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
+    }
     arg->end_procesor = true;
-    free(op);
-    free(arg);
+    // free(op);
+    // free(arg);
 }
