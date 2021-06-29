@@ -9,6 +9,7 @@
 #include "common.h"
 #include "opprocesor.h"
 #include "map.h"
+#include "threadpool.h"
 
 #define MAXLINE 1024
 #define ATTENDING 1
@@ -90,8 +91,11 @@ double freq;
 double x_minutes;
 sem_t mutex;
 struct MapCustom *operations_map;
+tpool_t *tm;
 int main(int argc, const char **argv)
 {
+    size_t num_threads = pcthread_get_num_procs();
+    tm = tpool_create(num_threads);
     operations_map = create_map();
     openlog("Framework Rover", LOG_PID, LOG_USER);
     atexit(closelog);
@@ -164,7 +168,8 @@ int main(int argc, const char **argv)
         clientlen = sizeof(clientaddr);
         connfd = malloc(sizeof(int));
         *connfd = accept(listenfd, (struct sockaddr *)&clientaddr, &clientlen);
-        pthread_create(&t_id, NULL, atender_cliente, connfd);
+        tpool_add_work(tm, atender_cliente, connfd);
+        // pthread_create(&t_id, NULL, atender_cliente, connfd);
     }
 
     return 0;
@@ -173,7 +178,7 @@ int main(int argc, const char **argv)
 void *atender_cliente(void *connfd)
 {
 
-    pthread_detach(pthread_self());
+    // pthread_detach(pthread_self());
     int fd_conn = *((int *)connfd);
 
     int n, status;
@@ -209,20 +214,22 @@ void *atender_cliente(void *connfd)
             int id_op = atoi(actual_operation);
             if (!has_key(operations_map, id_op))
             {
-                sem_wait(&mutex);
+                // sem_wait(&mutex);
 
                 opprocesor = op_procesor_create(id_op, freq, (int)x_minutes, dflag);
                 put_value(operations_map, id_op, opprocesor);
                 printf("%s  %f  %f\n", actual_operation, data_sensor, time_sensor);
 
-                sem_post(&mutex);
+                // sem_post(&mutex);
                 add_information(opprocesor, data_sensor, time_sensor);
                 struct arg_thread *args = malloc(sizeof(struct arg_thread));
                 args->opprocesor = opprocesor;
                 args->end_procesor = false;
 
-                pthread_create(&sub_t_id, NULL, verify_frequency, args);
-                pthread_create(&sub_t_id2, NULL, verify_waiting_time, args);
+                tpool_add_work(tm, verify_frequency, args);
+                tpool_add_work(tm, verify_waiting_time, args);
+                // pthread_create(&sub_t_id, NULL, verify_frequency, args);
+                // pthread_create(&sub_t_id2, NULL, verify_waiting_time, args);
             }
             else
             {
@@ -241,7 +248,7 @@ void *atender_cliente(void *connfd)
 
 void *verify_frequency(void *args)
 {
-    pthread_detach(pthread_self());
+    // pthread_detach(pthread_self());
     struct arg_thread *arg = (struct arg_thread *)args;
     struct OpProcesor *op = arg->opprocesor;
     volatile end_loop;
@@ -253,15 +260,15 @@ void *verify_frequency(void *args)
         double div = result / 60;
         do
         {
-            sleep((int)(freq*60));
+            sleep((int)(freq * 60));
             now_time = (double)time(NULL);
             result = now_time - (op->init_time);
             div = result / 60;
-            
+
             //hacer con nanosleep
         } while ((div < op->freq));
 
-        sem_wait(&mutex);
+        // sem_wait(&mutex);
 
         double val = process_information(op);
         if (dflag)
@@ -293,13 +300,13 @@ void *verify_frequency(void *args)
         // printf("valor es: %f de la thread %d\n", val, pthread_self());
         op->init_time = (double)time(NULL);
 
-        sem_post(&mutex);
+        // sem_post(&mutex);
     }
 }
 
 void *verify_waiting_time(void *args)
 {
-    pthread_detach(pthread_self());
+    // pthread_detach(pthread_self());
     struct arg_thread *arg = (struct arg_thread *)args;
     struct OpProcesor *op = arg->opprocesor;
     double now_time = (double)time(NULL);
@@ -323,5 +330,4 @@ void *verify_waiting_time(void *args)
         printf("La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
     }
     arg->end_procesor = true;
-
 }
