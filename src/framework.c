@@ -6,9 +6,9 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <syslog.h>
-#include "common.h"
-#include "opprocesor.h"
-#include "map.h"
+#include "../include/common.h"
+#include "../include/opprocesor.h"
+#include "../include/map.h"
 
 #define MAXLINE 1024
 #define ATTENDING 1

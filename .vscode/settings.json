@@ -17,6 +17,10 @@
         "streambuf": "c",
         "queue.h": "c",
         "semaphore.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "map.h": "c",
+        "opprocesor.h": "c",
+        "common.h": "c",
+        "getopt.h": "c"
     }
 }

@@ -1,5 +1,5 @@
 #ifndef opprocesor.h
-#include "opprocesor.h"
+#include "../include/opprocesor.h"
 #endif
 struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes,bool is_debug)
 {

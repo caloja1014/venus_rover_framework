@@ -1,11 +1,11 @@
 #include <getopt.h>
-#include "common.h"
 #include <limits.h>
 #include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <syslog.h>
 #include <signal.h>
+#include "../include/common.h"
 #define MAXLINE 1024
 void chance_state();
 void print_help(char *command)
