@@ -2,7 +2,12 @@
 #include "common.h"
 #include <limits.h>
 #include <time.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <syslog.h>
+#include <signal.h>
 #define MAXLINE 1024
+void chance_state();
 void print_help(char *command)
 {
 
@@ -14,9 +19,19 @@ void print_help(char *command)
     printf(" -t\t\t\tSet the time to send information");
 }
 
+volatile terminar;
+volatile pausar;
+
+sem_t mutex;
 int main(int argc, char **argv)
 {
 
+    openlog("Sensor Rover", LOG_PID, LOG_USER);
+    sem_init(&mutex, 0, 1);
+    terminar = false;
+    pausar = false;
+    pid_t t_id;
+    pthread_create(&t_id, NULL, chance_state, NULL);
     int opt, time_wait;
     int clientfd;
     char *hostname, *port, *opcodes;
@@ -81,34 +96,73 @@ int main(int argc, char **argv)
     time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
     char read_buffer[MAXLINE + 1] = {0};
     //printf("%d\n",time_spend);
-    while (time_spend < time_wait)
+    sem_wait(&mutex);
+    while (!terminar)
     {
-        char *s_timestamp;
-        char *s_num;
-        unsigned long timestamp = (unsigned long)time(NULL);
-        int num_random = rand() % 256;
-        sprintf(s_timestamp, "%d", timestamp);
-        sprintf(s_num, "%d", num_random);
-
-        char dato_send[MAXLINE];
-        memset(dato_send, 0, MAXLINE);
-        strcat(dato_send, opcodes);
-        strcat(dato_send, ",");
-        strcat(dato_send, s_num);
-        strcat(dato_send, ",");
-        strcat(dato_send, s_timestamp);
-        size_t l = sizeof(dato_send);
-        n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
-        n = write(clientfd, dato_send, l);
-
-        printf("%d  %s  %s\n", n, dato_send, read_buffer);
-
-        sleep(5);
-        if (n <= 0)
+        if (!pausar)
         {
-            printf("Error"); //cambiar cuando ya esté en producción
+            char *s_timestamp;
+            char *s_num;
+            unsigned long timestamp = (unsigned long)time(NULL);
+            int num_random = rand() % 256;
+            sprintf(s_timestamp, "%d", timestamp);
+            sprintf(s_num, "%d", num_random);
+
+            char dato_send[MAXLINE];
+            memset(dato_send, 0, MAXLINE);
+            strcat(dato_send, opcodes);
+            strcat(dato_send, ",");
+            strcat(dato_send, s_num);
+            strcat(dato_send, ",");
+            strcat(dato_send, s_timestamp);
+            size_t l = sizeof(dato_send);
+            n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
+            n = write(clientfd, dato_send, l);
+
+            // printf("%d  %s  %s\n", n, dato_send, read_buffer);
+
+            sleep(5);
+            if (n <= 0)
+            {
+                printf("Error"); //cambiar cuando ya esté en producción
+                break;
+            }
+            time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
+        }
+    }
+    sem_post(&mutex);
+    return 0;
+}
+
+void chance_state()
+{
+    pthread_detach(pthread_self());
+    do
+    {
+        printf("Si desea cambiar el estado del sensor digite:\n");
+        printf("p: pausa\n");
+        printf("r: reactivarn\n");
+        printf("t: terminar\n");
+        printf("Ingrese la opción que requiera: ");
+        char op;
+        scanf("%c", &op);
+        switch (op)
+        {
+        case 'p':
+            syslog(LOG_INFO, "El envio de la información se ha colocado en pausa\n");
+            pausar = true;
+            break;
+        case 'r':
+            syslog(LOG_INFO, "Se ha reactivado el envio de la información\n");
+            pausar = false;
+            break;
+        case 't':
+            syslog(LOG_INFO, "Finaliza el sensor\n");
+            terminar = true;
+            exit(0);
+            break;
+        default:
             break;
         }
-        time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
-    }
+    } while (!terminar);
 }

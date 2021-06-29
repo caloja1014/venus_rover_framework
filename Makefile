@@ -9,7 +9,7 @@ framework: framework.o common.o queue.o op_code_buffer.o opprocesor.o map.o $(DE
 	gcc -o $@ framework.o common.o queue.o op_code_buffer.o opprocesor.o map.o -L. -lpthread $(DFLAGS)
 
 sensor: sensor.o common.o $(DEPS)
-	gcc -o $@ sensor.o common.o $(DFLAGS)
+	gcc -o $@ sensor.o common.o -L. -lpthread $(DFLAGS)
 
 
 %.o: %.c $(DEPS)
