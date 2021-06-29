@@ -18,6 +18,7 @@ struct OpCodeBuffer *op_code_buffer_create(int id_op)
 }
 void pop_information(struct OpCodeBuffer *op_cb)
 {
+    
     popQ(op_cb->data);
     popQ(op_cb->times);
 }
