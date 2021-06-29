@@ -323,6 +323,5 @@ void *verify_waiting_time(void *args)
         printf("La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
     }
     arg->end_procesor = true;
-    // free(op);
-    // free(arg);
+
 }
