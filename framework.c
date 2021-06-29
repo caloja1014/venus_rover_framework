@@ -209,13 +209,13 @@ void *atender_cliente(void *connfd)
             int id_op = atoi(actual_operation);
             if (!has_key(operations_map, id_op))
             {
-                sem_wait(&mutex);
+                // sem_wait(&mutex);
 
                 opprocesor = op_procesor_create(id_op, freq, (int)x_minutes, dflag);
                 put_value(operations_map, id_op, opprocesor);
                 printf("%s  %f  %f\n", actual_operation, data_sensor, time_sensor);
 
-                sem_post(&mutex);
+                // sem_post(&mutex);
                 add_information(opprocesor, data_sensor, time_sensor);
                 struct arg_thread *args = malloc(sizeof(struct arg_thread));
                 args->opprocesor = opprocesor;
@@ -261,7 +261,7 @@ void *verify_frequency(void *args)
             //hacer con nanosleep
         } while ((div < op->freq));
 
-        sem_wait(&mutex);
+        // sem_wait(&mutex);
 
         double val = process_information(op);
         if (dflag)
@@ -293,7 +293,7 @@ void *verify_frequency(void *args)
         // printf("valor es: %f de la thread %d\n", val, pthread_self());
         op->init_time = (double)time(NULL);
 
-        sem_post(&mutex);
+        // sem_post(&mutex);
     }
 }
 
