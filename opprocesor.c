@@ -1,5 +1,6 @@
+#ifndef opprocesor.h
 #include "opprocesor.h"
-
+#endif
 struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes,bool is_debug)
 {
     struct OpProcesor *opprocesor = malloc(sizeof(struct OpProcesor));
@@ -40,7 +41,7 @@ double process_information(struct OpProcesor *opprocesor)
     return capacity!=0? total / capacity:-1;
 }
 
-void add_information(struct OpProcesor *opprocesor, double data, double timestamp)
+void *add_information(struct OpProcesor *opprocesor, double data, double timestamp)
 {
     if (flag)
     {

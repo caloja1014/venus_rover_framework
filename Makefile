@@ -1,12 +1,12 @@
-DEPS = common.h queue.h opprocesor.h op_code_buffer.h
+DEPS = common.h queue.h opprocesor.h op_code_buffer.h map.h
 CFLAGS= -Wall -c -g
 
 .PHONY: all debug sanitize clean
 
 all: framework sensor
 
-framework: framework.o common.o queue.o op_code_buffer.o opprocesor.o  $(DEPS)
-	gcc -o $@ framework.o common.o queue.o op_code_buffer.o opprocesor.o -L. -lpthread $(DFLAGS)
+framework: framework.o common.o queue.o op_code_buffer.o opprocesor.o map.o $(DEPS)
+	gcc -o $@ framework.o common.o queue.o op_code_buffer.o opprocesor.o map.o -L. -lpthread $(DFLAGS)
 
 sensor: sensor.o common.o $(DEPS)
 	gcc -o $@ sensor.o common.o $(DFLAGS)

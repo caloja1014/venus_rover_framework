@@ -1,3 +1,5 @@
+#ifndef QUEUE
+#define QUEUE
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -13,3 +15,5 @@ struct Queue *createQueue(unsigned capacity);
 int isFullQ(struct Queue *queue);
 void pushQ(struct Queue *queue, double item);
 double popQ(struct Queue *queue);
+
+#endif /*QUEUE */

@@ -4,11 +4,12 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <fcntl.h>
-//#include "threadpool.h"
-#include "common.h"
-#include "opprocesor.h"
 #include <semaphore.h>
 #include <syslog.h>
+#include "common.h"
+#include "opprocesor.h"
+#include "map.h"
+
 #define MAXLINE 1024
 #define ATTENDING 1
 #define WAITING 0
@@ -88,8 +89,10 @@ int dflag = 0;
 double freq;
 double x_minutes;
 sem_t mutex;
+struct MapCustom *operations_map;
 int main(int argc, const char **argv)
 {
+    operations_map = create_map();
     openlog("Framework Rover", LOG_PID, LOG_USER);
     atexit(closelog);
     sem_init(&mutex, 0, 1);
@@ -185,37 +188,52 @@ void *atender_cliente(void *connfd)
 
         if (n <= 0)
             return;
-        char **values_split = parse_comando(buf, ",");
-        char *eptr;
-        double data_sensor = strtod(values_split[3], &eptr);
-        double time_sensor = strtod(values_split[4], &eptr);
 
-        if (flag)
+        char **sep_data = parse_comando(buf, "]");
+        char *opers = sep_data[0] + 1;
+        char **opers_sep = parse_comando(opers, ",");
+        char **values_split = parse_comando(sep_data[1], ",");
+
+        char *eptr;
+        double data_sensor = strtod(values_split[0], &eptr);
+        double time_sensor = strtod(values_split[1], &eptr);
+
+        // if (flag)
+        // {
+
+        char *actual_operation;
+        int indice = 0;
+        while ((actual_operation = opers_sep[indice++]) != NULL)
         {
             pthread_t sub_t_id, sub_t_id2;
+            int id_op = atoi(actual_operation);
+            if (!has_key(operations_map, id_op))
+            {
+                sem_wait(&mutex);
 
-            sem_wait(&mutex);
-            opprocesor = op_procesor_create(1, freq, x_minutes, dflag);
-            sem_post(&mutex);
+                opprocesor = op_procesor_create(id_op, freq, (int)x_minutes, dflag);
+                put_value(operations_map, id_op, opprocesor);
+                printf("%s  %f  %f\n", actual_operation, data_sensor, time_sensor);
 
-            add_information(opprocesor, data_sensor, time_sensor);
+                sem_post(&mutex);
+                add_information(opprocesor, data_sensor, time_sensor);
+                struct arg_thread *args = malloc(sizeof(struct arg_thread));
+                args->opprocesor = opprocesor;
+                args->end_procesor = false;
 
-            struct arg_thread *args = malloc(sizeof(struct arg_thread));
-            args->opprocesor = opprocesor;
-            args->end_procesor = false;
-
-            pthread_create(&sub_t_id, NULL, verify_frequency, args);
-            pthread_create(&sub_t_id2, NULL, verify_waiting_time, args);
-            flag = false;
+                pthread_create(&sub_t_id, NULL, verify_frequency, args);
+                pthread_create(&sub_t_id2, NULL, verify_waiting_time, args);
+            }
+            else
+            {
+                opprocesor = get_value_of_map(operations_map, id_op);
+                printf("Agregando...\n");
+                add_information(opprocesor, data_sensor, time_sensor);
+            }
+            write(fd_conn, "1", 2);
+            // printf("tid=%d   %f  %f\n", pthread_self(), data_sensor, time_sensor);
+            memset(buf, 0, MAXLINE);
         }
-        else
-        {
-            add_information(opprocesor, data_sensor, time_sensor);
-        }
-
-        write(fd_conn, "1", 2);
-        // printf("tid=%d   %f  %f\n", pthread_self(), data_sensor, time_sensor);
-        memset(buf, 0, MAXLINE);
     }
     close(fd_conn);
     return NULL;
@@ -227,18 +245,21 @@ void *verify_frequency(void *args)
     struct arg_thread *arg = (struct arg_thread *)args;
     struct OpProcesor *op = arg->opprocesor;
     volatile end_loop;
+
     while (!(end_loop = arg->end_procesor))
     {
         double now_time = (double)time(NULL);
         double result = now_time - (op->init_time);
         double div = result / 60;
-        while ((div < op->freq))
+        do
         {
-            // printf("Comprobando... %f  freq: %f\n", div, op->freq);
+            sleep((int)(freq*60));
             now_time = (double)time(NULL);
             result = now_time - (op->init_time);
             div = result / 60;
-        }
+            
+            //hacer con nanosleep
+        } while ((div < op->freq));
 
         sem_wait(&mutex);
 

@@ -1,3 +1,5 @@
+#ifndef MAP_CUSTOM
+#define MAP_CUSTOM
 #include "opprocesor.h"
 
 struct EntryMap
@@ -18,3 +20,4 @@ struct OpProcesor *get_value_of_map(struct MapCustom *map,int key);
 void put_value(struct MapCustom *map, int key, struct OpProcesor *info_data);
 bool *has_key(struct MapCustom *map, int key);
 void delete_key(struct MapCustom *map, int key);
+#endif /* MAP_CUSTOM */
