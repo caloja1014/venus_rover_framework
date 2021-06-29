@@ -101,9 +101,9 @@ int main(int argc, char **argv)
     {
         if (!pausar)
         {
-            char *s_timestamp;
-            char *s_num;
-            unsigned long timestamp = (unsigned long)time(NULL);
+            char s_timestamp[1020];
+            char s_num[1020];
+            unsigned int timestamp = (unsigned int)time(NULL);
             int num_random = rand() % 256;
             sprintf(s_timestamp, "%d", timestamp);
             sprintf(s_num, "%d", num_random);
