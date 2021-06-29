@@ -1,5 +1,5 @@
 DEPS = include/common.h include/queue.h include/opprocesor.h include/op_code_buffer.h include/map.h
-CFLAGS= -Wall -c -g -o
+CFLAGS= -Wall -c -o
 
 .PHONY: all debug sanitize clean
 
