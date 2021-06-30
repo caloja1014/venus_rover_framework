@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <semaphore.h>
 #include <syslog.h>
+
 #include "../include/common.h"
 #include "../include/opprocesor.h"
 #include "../include/map.h"
@@ -198,9 +199,6 @@ void *atender_cliente(void *connfd)
         double data_sensor = strtod(values_split[0], &eptr);
         double time_sensor = strtod(values_split[1], &eptr);
 
-        // if (flag)
-        // {
-
         char *actual_operation;
         int indice = 0;
         while ((actual_operation = opers_sep[indice++]) != NULL)
@@ -216,13 +214,13 @@ void *atender_cliente(void *connfd)
                 printf("%s  %f  %f\n", actual_operation, data_sensor, time_sensor);
 
                 // sem_post(&mutex);
+
                 add_information(opprocesor, data_sensor, time_sensor);
                 struct arg_thread *args = malloc(sizeof(struct arg_thread));
                 args->opprocesor = opprocesor;
                 args->end_procesor = false;
-
-                pthread_create(&sub_t_id, NULL, verify_frequency, args);
                 pthread_create(&sub_t_id2, NULL, verify_waiting_time, args);
+                pthread_create(&sub_t_id, NULL, verify_frequency, args);
             }
             else
             {
@@ -253,23 +251,24 @@ void *verify_frequency(void *args)
         double div = result / 60;
         do
         {
-            sleep((int)(freq*60));
+            sleep((int)(freq * 60));
             now_time = (double)time(NULL);
             result = now_time - (op->init_time);
             div = result / 60;
-            
+
             //hacer con nanosleep
         } while ((div < op->freq));
 
         // sem_wait(&mutex);
 
         double val = process_information(op);
+        // sem_post(&mutex);
         if (dflag)
         {
             //syslogs
             if (val == -1)
             {
-                syslog(LOG_INFO, "No existen datos para realizar el cálculo\n");
+                // syslog(LOG_INFO, "No existen datos para realizar el cálculo\n");
             }
             else
             {
@@ -282,7 +281,7 @@ void *verify_frequency(void *args)
         {
             if (val == -1)
             {
-                printf("No existen datos para realizar el cálculo\n");
+                // printf("No existen datos para realizar el cálculo\n");
             }
             else
             {
@@ -292,8 +291,6 @@ void *verify_frequency(void *args)
 
         // printf("valor es: %f de la thread %d\n", val, pthread_self());
         op->init_time = (double)time(NULL);
-
-        // sem_post(&mutex);
     }
 }
 
@@ -311,17 +308,23 @@ void *verify_waiting_time(void *args)
         now_time = (double)time(NULL);
         result = (now_time - (op->last_time_pushed)) / 60;
     }
+
+    double val = process_information_and_verify(op);
+
     if (dflag)
     {
         //syslog
         char log_message[MAXLINE];
-        sprintf(log_message, "La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
+        sprintf(log_message, "La operación %d se ha detenido dado que ha dejado de recibir elementos por %d minutos apróximadamente\n", op->id_op, wait_time);
         syslog(LOG_INFO, log_message);
     }
     else
     {
-        printf("La operación %d se ha detenido dado que ha dejado de recibir elementos por %f minutos apróximadamente\n", op->id_op, op->x_minutes);
+        printf("La operación %d se ha detenido dado que ha dejado de recibir elementos por %d minutos apróximadamente\n", op->id_op, wait_time);
     }
     arg->end_procesor = true;
 
+    // sem_wait(&mutex);
+    delete_key(operations_map, arg->opprocesor->id_op);
+    // sem_post(&mutex);
 }

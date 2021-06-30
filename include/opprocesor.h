@@ -15,5 +15,5 @@ struct OpProcesor
 struct OpProcesor *op_procesor_create(int id_op, double freq, int x_minutes,bool is_debug);
 double process_information(struct OpProcesor *opprocesor);
 void *add_information(struct OpProcesor *opprocesor, double data, double timestamp);
-
+double process_information_and_verify(struct OpProcesor *opprocesor);
 #endif /*OPPROCESOR_H */
