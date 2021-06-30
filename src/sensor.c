@@ -21,11 +21,13 @@ void print_help(char *command)
 
 volatile terminar;
 volatile pausar;
+pthread_mutex_t mutex2;
 
 sem_t mutex;
 int main(int argc, char **argv)
 {
 
+    // pthread_mutex_init(&mutex, 0);
     openlog("Sensor Rover", LOG_PID, LOG_USER);
     sem_init(&mutex, 0, 1);
     terminar = false;
@@ -36,7 +38,6 @@ int main(int argc, char **argv)
     int clientfd;
     char *hostname, *port, *opcodes;
 
-    int signal_recv;
     while ((opt = getopt(argc, argv, "ht:")) != -1)
     {
         switch (opt)
@@ -85,9 +86,9 @@ int main(int argc, char **argv)
     {
         connection_error(clientfd);
     }
-    printf("Connected on %s in port %s succesfully.\n", hostname, port);
+    // printf("Connected on %s in port %s succesfully.\n", hostname, port);
 
-    clock_t start_time, end_time;
+    clock_t start_time;
     start_time = clock();
     double time_spend;
 
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
     time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
     char read_buffer[MAXLINE + 1] = {0};
     //printf("%d\n",time_spend);
-    sem_wait(&mutex);
+
     while (!terminar)
     {
         if (!pausar)
@@ -119,9 +120,9 @@ int main(int argc, char **argv)
             n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
             n = write(clientfd, dato_send, l);
 
-            // printf("%d  %s  %s\n", n, dato_send, read_buffer);
+            printf("%d  %s  %s\n", n, dato_send, read_buffer);
 
-            sleep(5);
+            sleep(time_wait);
             if (n <= 0)
             {
                 printf("Error"); //cambiar cuando ya esté en producción
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
             time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
         }
     }
-    sem_post(&mutex);
+
     return 0;
 }
 
@@ -139,22 +140,34 @@ void chance_state()
     pthread_detach(pthread_self());
     do
     {
+        // fflush(stdout);
+        // fputs("\033c", stdout);
+        // pthread_mutex_lock(&mutex2);
+        
+        printf("\n");
         printf("Si desea cambiar el estado del sensor digite:\n");
         printf("p: pausa\n");
         printf("r: reactivarn\n");
         printf("t: terminar\n");
         printf("Ingrese la opción que requiera: ");
+        printf("\n");
         char op;
-        scanf("%c", &op);
+
+        scanf(" %c", &op);
+
         switch (op)
         {
         case 'p':
             syslog(LOG_INFO, "El envio de la información se ha colocado en pausa\n");
+            // sem_wait(&mutex);
             pausar = true;
+            // sem_post(&mutex);
             break;
         case 'r':
+            // sem_wait(&mutex);
             syslog(LOG_INFO, "Se ha reactivado el envio de la información\n");
             pausar = false;
+            // sem_post(&mutex);
             break;
         case 't':
             syslog(LOG_INFO, "Finaliza el sensor\n");
@@ -164,5 +177,7 @@ void chance_state()
         default:
             break;
         }
+        // pthread_mutex_unlock(&mutex2);
+
     } while (!terminar);
 }

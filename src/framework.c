@@ -207,13 +207,24 @@ void *atender_cliente(void *connfd)
             int id_op = atoi(actual_operation);
             if (!has_key(operations_map, id_op))
             {
-                // sem_wait(&mutex);
+                sem_wait(&mutex);
 
                 opprocesor = op_procesor_create(id_op, freq, (int)x_minutes, dflag);
-                put_value(operations_map, id_op, opprocesor);
-                printf("%s  %f  %f\n", actual_operation, data_sensor, time_sensor);
 
-                // sem_post(&mutex);
+                put_value(operations_map, id_op, opprocesor);
+
+                if(dflag)
+                {
+                    char log_message[MAXLINE];
+                    sprintf(log_message, "Se ha creado correctamente el OpProcesor para la operación %d\n", id_op);
+                    syslog(LOG_INFO, log_message);
+                }
+                else
+                {
+                    printf("Se ha creado correctamente el OpProcesor para la operación %d\n", id_op);
+                }
+
+                sem_post(&mutex);
 
                 add_information(opprocesor, data_sensor, time_sensor);
                 struct arg_thread *args = malloc(sizeof(struct arg_thread));
@@ -262,7 +273,7 @@ void *verify_frequency(void *args)
         // sem_wait(&mutex);
 
         double val = process_information(op);
-        // sem_post(&mutex);
+        sem_post(&mutex);
         if (dflag)
         {
             //syslogs
@@ -326,5 +337,5 @@ void *verify_waiting_time(void *args)
 
     // sem_wait(&mutex);
     delete_key(operations_map, arg->opprocesor->id_op);
-    // sem_post(&mutex);
+    sem_post(&mutex);
 }
