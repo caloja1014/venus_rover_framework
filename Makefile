@@ -11,12 +11,18 @@ framework: obj/framework.o obj/common.o obj/queue.o obj/op_code_buffer.o obj/opp
 sensor: obj/sensor.o obj/common.o $(DEPS)
 	gcc -o $@ obj/sensor.o obj/common.o -L. -lpthread $(DFLAGS)
 
-test_framework: testing_scripts/test_framework.o include/test.h
-	gcc -o $@ testing_scripts/test_framework.o -L. -lpthread
+test_framework: obj/test_framework.o include/test.h
+	gcc -o $@ obj/test_framework.o -L. -lpthread
 
-test_sensor: testing_scripts/test_sensor.o include/test.h
-	gcc -o $@ testing_scripts/test_sensor.o -L. -lpthread
+test_sensor: obj/test_sensor.o include/test.h
+	gcc -o $@ obj/test_sensor.o -L. -lpthread
 
+obj/test_sensor.o: testing_scripts/test_sensor.c
+	gcc $(CFLAGS) $@ $<
+
+obj/test_framework.o: testing_scripts/test_framework.c
+	gcc $(CFLAGS) $@ $<
+	
 obj/%.o: src/%.c $(DEPS)
 	mkdir -p obj/
 	gcc $(CFLAGS) $@ $< $(DFLAGS) 

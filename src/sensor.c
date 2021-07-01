@@ -86,17 +86,15 @@ int main(int argc, char **argv)
     {
         connection_error(clientfd);
     }
-    // printf("Connected on %s in port %s succesfully.\n", hostname, port);
+
 
     clock_t start_time;
     start_time = clock();
     double time_spend;
 
-    // char dato_prueba[] = "[2,4,9],99,1095379198.75";
     size_t n, n2;
     time_spend = (double)(clock() - start_time) / CLOCKS_PER_SEC;
     char read_buffer[MAXLINE + 1] = {0};
-    //printf("%d\n",time_spend);
 
     while (!terminar)
     {
@@ -119,8 +117,6 @@ int main(int argc, char **argv)
             size_t l = sizeof(dato_send);
             n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
             n = write(clientfd, dato_send, l);
-
-            printf("%d  %s  %s\n", n, dato_send, read_buffer);
 
             sleep(time_wait);
             if (n <= 0)

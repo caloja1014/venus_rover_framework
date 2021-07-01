@@ -103,8 +103,7 @@ int main(int argc, const char **argv)
     unsigned int clientlen;
 
     struct sockaddr_in clientaddr;
-    struct hostent *hp;
-    char *haddrp, *port;
+    char *port;
 
     while ((opt = getopt(argc, argv, "hdf:x:")) != -1)
     {
@@ -142,7 +141,6 @@ int main(int argc, const char **argv)
         fprintf(stderr, "     %s -d\n", argv[0]);
         return 1;
     }
-    printf("%d  %d\n", freq, x_minutes);
 
     int port_n = atoi(port);
     if (port_n <= 0 || port_n > USHRT_MAX)
@@ -177,7 +175,7 @@ void *atender_cliente(void *connfd)
     pthread_detach(pthread_self());
     int fd_conn = *((int *)connfd);
 
-    int n, status;
+    int n;
     char buf[MAXLINE] = {0};
     struct OpProcesor *opprocesor;
     bool flag = true;
@@ -188,7 +186,7 @@ void *atender_cliente(void *connfd)
         n = read(fd_conn, buf, MAXLINE);
 
         if (n <= 0)
-            return;
+            return -1;
 
         char **sep_data = parse_comando(buf, "]");
         char *opers = sep_data[0] + 1;
@@ -240,7 +238,6 @@ void *atender_cliente(void *connfd)
                 add_information(opprocesor, data_sensor, time_sensor);
             }
             write(fd_conn, "1", 2);
-            // printf("tid=%d   %f  %f\n", pthread_self(), data_sensor, time_sensor);
             memset(buf, 0, MAXLINE);
         }
     }
@@ -279,7 +276,6 @@ void *verify_frequency(void *args)
             //syslogs
             if (val == -1)
             {
-                // syslog(LOG_INFO, "No existen datos para realizar el cálculo\n");
             }
             else
             {
@@ -292,7 +288,6 @@ void *verify_frequency(void *args)
         {
             if (val == -1)
             {
-                // printf("No existen datos para realizar el cálculo\n");
             }
             else
             {
@@ -300,7 +295,6 @@ void *verify_frequency(void *args)
             }
         }
 
-        // printf("valor es: %f de la thread %d\n", val, pthread_self());
         op->init_time = (double)time(NULL);
     }
 }
