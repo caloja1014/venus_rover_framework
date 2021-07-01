@@ -312,6 +312,7 @@ void *verify_waiting_time(void *args)
     {
         now_time = (double)time(NULL);
         result = (now_time - (op->last_time_pushed)) / 60;
+        sleep(wait_time);
     }
 
     double val = process_information_and_verify(op);
