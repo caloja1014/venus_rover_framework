@@ -118,7 +118,7 @@ int main(int argc, char **argv)
             n2 = recv(clientfd, read_buffer, sizeof(int), MSG_DONTWAIT);
             n = write(clientfd, dato_send, l);
 
-            sleep(time_wait);
+            sleep((int)(time_wait/1000));
             if (n <= 0)
             {
                 printf("Error"); //cambiar cuando ya esté en producción

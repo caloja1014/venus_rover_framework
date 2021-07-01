@@ -256,15 +256,14 @@ void *verify_frequency(void *args)
     {
         double now_time = (double)time(NULL);
         double result = now_time - (op->init_time);
-        double div = result / 60;
+        double div = result;
         do
         {
-            sleep((int)(freq * 60));
+            sleep((int)freq);
             now_time = (double)time(NULL);
             result = now_time - (op->init_time);
-            div = result / 60;
+            div = result;
 
-            //hacer con nanosleep
         } while ((div < op->freq));
 
         // sem_wait(&mutex);
